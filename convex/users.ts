@@ -10,15 +10,13 @@ export const createUser = mutation({
     image: v.string(),
     clerkId: v.string(),
   },
-
   handler: async (ctx, args) => {
-    const user = await ctx.db
+    const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq
-      ("clerkId", args.clerkId))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
-    if (user) return;
+    if (existingUser) return;
 
     await ctx.db.insert("users", {
       username: args.username,
@@ -26,10 +24,10 @@ export const createUser = mutation({
       email: args.email,
       bio: args.bio,
       image: args.image,
+      clerkId: args.clerkId,
       followers: 0,
       following: 0,
       posts: 0,
-      clerkId: args.clerkId,
     });
   },
 });

@@ -2,32 +2,39 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "@clerk/expo";
 import React from "react";
 
-export default function ScreenHome() {
+export default function HomeScreen() {
+  const { signOut } = useAuth();
 
-    const { signOut } = useAuth();
-
-    const handleLogout = async () => {
-        await signOut();
-    };
-
-    return (
-        <View style={styles.container}>
-            <Text style={{ color: "#fff" }}>Screen Home</Text>
-            <TouchableOpacity
-                style={{ backgroundColor: "#fff", padding: 10, borderRadius: 10, marginTop: 10 }}
-                onPress={handleLogout}
-            >
-                <Text style={{ color: "#000" }}>Logout</Text>
-            </TouchableOpacity>
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Feed</Text>
+      <TouchableOpacity style={styles.signOutButton} onPress={() => signOut()}>
+        <Text style={styles.signOutText}>Sign out</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#000",
-    },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#000",
+  },
+  title: {
+    color: "#fff",
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  signOutButton: {
+    backgroundColor: "#1DA1F2",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  signOutText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
 });

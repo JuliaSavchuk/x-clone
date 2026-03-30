@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import InitialLayout from "@/components/InitialLayout";
 import React from "react";
-import ClerkAndConvexProvider from "@/providers/ClearAndConvexProviders";
+import ClerkAndConvexProvider from "@/providers/ClerkAndConvexProvider";
 
 export default function RootLayout() {
   return (
