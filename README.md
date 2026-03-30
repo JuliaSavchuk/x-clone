@@ -8,10 +8,10 @@
 
 | Роль | Ім'я |
 |------|------|
-| Team Lead / Project Setup | [Савчук Юлія] |
-| Auth Developer | [Савчук Юлія] |
-| Backend Developer | [Савчук Юлія] |
-| UI Developer | [Савчук Юлія] |
+| Team Lead / Project Setup | Савчук Юлія |
+| Auth Developer | Савчук Юлія |
+| Backend Developer | Савчук Юлія |
+| UI Developer | Савчук Юлія |
 
 > Проєкт виконано самостійно — всі ролі реалізовано однією особою.
 
