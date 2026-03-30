@@ -1,50 +1,133 @@
-# Welcome to your Expo app 👋
+# X (Twitter) Clone — Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Мобільний застосунок — клон соціальної мережі X (Twitter), створений з використанням Expo, Clerk та Convex.
 
-## Get started
+---
 
-1. Install dependencies
+## 👩‍💻 Розробник
 
-   ```bash
-   npm install
-   ```
+| Роль | Ім'я |
+|------|------|
+| Team Lead / Project Setup | [Савчук Юлія] |
+| Auth Developer | [Савчук Юлія] |
+| Backend Developer | [Савчук Юлія] |
+| UI Developer | [Савчук Юлія] |
 
-2. Start the app
+> Проєкт виконано самостійно — всі ролі реалізовано однією особою.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠 Технології
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Expo Router** — навігація (Stack + Tabs)
+- **Clerk** — автентифікація через Google OAuth
+- **Convex** — база даних і бекенд
+- **TypeScript** — типізація
+- **MaterialIcons** — іконки
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🚀 Інструкція запуску
 
-When you're ready, run:
-
+### 1. Клонувати репозиторій
 ```bash
-npm run reset-project
+git clone https://github.com/JuliaSavchuk/x-clone.git
+cd x-clone
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Встановити залежності
+```bash
+npm install
+```
 
-## Learn more
+### 3. Створити файл `.env` у корені проєкту
+```env
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxx
 
-To learn more about developing your project with Expo, look at the following resources:
+CONVEX_DEPLOYMENT=dev:xxxxxx
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+EXPO_PUBLIC_CONVEX_URL=https://xxxxxxxxxxxxxxxx.convex.cloud
 
-## Join the community
+EXPO_PUBLIC_CONVEX_SITE_URL=https://xxxxxxxxxxxxxxxx.convex..site
 
-Join our community of developers creating universal apps.
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 4. Запустити Convex (в окремому терміналі)
+```bash
+npx convex dev
+```
+
+### 5. Запустити додаток
+```bash
+npm start
+```
+
+Відсканувати QR-код через **Expo Go** або запустити в емуляторі.
+
+---
+
+## ✅ Функціонал
+
+- [x] Екран входу з кнопкою «Continue with Google»
+- [x] Google OAuth через Clerk
+- [x] Автоматичний редірект після входу на таби
+- [x] Захист роутів (незалогінений користувач → login)
+- [x] Tab Navigator з 4 вкладками (Feed, Create, Notifications, Profile)
+- [x] MaterialIcons іконки на кожному табі
+- [x] Темна тема (чорний фон, Twitter Blue акцент)
+- [x] Convex база даних з таблицею users
+- [x] Clerk Webhook для автоматичного створення юзера в БД
+
+---
+
+## 📁 Структура проєкту
+```
+x-clone/
+├── app/
+│   ├── _layout.tsx              # ClerkProvider + ConvexProvider + SafeAreaView
+│   ├── index.tsx                # Redirect → login
+│   ├── (auth)/
+│   │   └── login.tsx            # Google OAuth (useSSO)
+│   └── (tabs)/
+│       ├── _layout.tsx          # Tab Navigator
+│       ├── index.tsx            # Feed
+│       ├── create.tsx           # Create
+│       ├── notifications.tsx    # Notifications
+│       └── profile.tsx          # Profile
+├── components/
+│   └── InitialLayout.tsx        # Захист роутів
+├── constants/
+│   └── theme.ts                 # Кольорова палітра
+├── convex/
+│   ├── auth.config.ts           # Clerk + Convex інтеграція
+│   ├── schema.ts                # Схема БД
+│   ├── users.ts                 # Мутації для юзерів
+│   └── http.ts                  # Webhook обробник
+├── providers/
+│   └── ClearAndConvexProviders.tsx
+├── styles/
+│   └── login.styles.ts
+└── .env 
+```
+
+---
+
+## 🎨 Кольорова палітра
+
+| Змінна | Колір | Призначення |
+|--------|-------|-------------|
+| `primary` | `#1DA1F2` | Twitter Blue |
+| `background` | `#000000` | Фон |
+| `surface` | `#16181C` | Картки |
+| `surfaceLight` | `#2F3336` | Розділювачі |
+| `white` | `#E7E9EA` | Текст |
+| `grey` | `#71767B` | Підписи |
+
+---
+
+## 📸 Скріншоти
+
+| Login Screen | Feed Tab |
+|---|---|
+|<img width="396" height="887" alt="Знімок екрана 2026-03-30 230707" src="https://github.com/user-attachments/assets/043d36f4-e8e6-4b74-a36c-b9e4d4d73720" />|_<img width="398" height="883" alt="Знімок екрана 2026-03-30 230733" src="https://github.com/user-attachments/assets/c21966a5-0ec5-4fbd-9f78-4d488674057d" />
+ |
