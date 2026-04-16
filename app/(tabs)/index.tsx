@@ -1,40 +1,61 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useAuth } from "@clerk/expo";
 import React from "react";
+import { View, FlatList, Text, TouchableOpacity } from "react-native";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import Post from "@/components/Post";
+import StoriesSection from "@/components/StoriesSection";
+import Loader from "@/components/Loader";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "@/constants/theme";
+import { styles } from "@/styles/feed.styles";
 
 export default function HomeScreen() {
-  const { signOut } = useAuth();
+  const posts = useQuery(api.posts.getPosts);
+
+  // Поки дані завантажуються — показуємо Loader
+  if (posts === undefined) return <Loader />;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Feed</Text>
-      <TouchableOpacity style={styles.signOutButton} onPress={() => signOut()}>
-        <Text style={styles.signOutText}>Sign out</Text>
-      </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>X Clone</Text>
+        <TouchableOpacity style={styles.headerIcon}>
+          <Ionicons
+            name="notifications-outline"
+            size={24}
+            color={COLORS.white}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* FlatList замість ScrollView — рендерить тільки видимі елементи */}
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => <Post post={item} />}
+        // Stories відображаються як header списку
+        ListHeaderComponent={<StoriesSection />}
+        // Якщо постів немає — показуємо повідомлення
+        ListEmptyComponent={
+          <View
+            style={{ alignItems: "center", marginTop: 60 }}
+          >
+            <Ionicons
+              name="images-outline"
+              size={48}
+              color={COLORS.grey}
+            />
+            <Text
+              style={{ color: COLORS.grey, marginTop: 12, fontSize: 15 }}
+            >
+              No posts yet
+            </Text>
+          </View>
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60 }}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#000",
-  },
-  title: {
-    color: "#fff",
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  signOutButton: {
-    backgroundColor: "#1DA1F2",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  signOutText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-});
