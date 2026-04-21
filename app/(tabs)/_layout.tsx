@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { COLORS } from "../../constants/theme";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 
 export default function TabsLayout() {
@@ -9,49 +9,68 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: COLORS.primary,
+        tabBarActiveTintColor: COLORS.white,
         tabBarInactiveTintColor: COLORS.grey,
         tabBarStyle: {
           backgroundColor: COLORS.background,
-          borderTopWidth: 0,
-          position: "absolute",
-          elevation: 0,
-          height: 40,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: COLORS.surfaceLight,
+          height: 52,
+          paddingBottom: 6,
+          paddingTop: 6,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="add-circle-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "search" : "search-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="notifications-none" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "notifications" : "notifications-outline"}
+              size={25}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              size={27}
+              color={color}
+            />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+import { StyleSheet } from "react-native";

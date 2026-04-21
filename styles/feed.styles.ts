@@ -1,49 +1,44 @@
-import { StyleSheet, Dimensions } from "react-native";
+import { StyleSheet } from "react-native";
 import { COLORS } from "@/constants/theme";
 
-const { width } = Dimensions.get("window");
-
 export const styles = StyleSheet.create({
-  // ── Контейнер екрану ──────────────────────────────────────────────
+  // Screen container
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
 
-  // ── Header ────────────────────────────────────────────────────────
+  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.surfaceLight,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
     color: COLORS.white,
-    fontFamily: "JetBrainsMono-Medium",
+    letterSpacing: -0.3,
   },
   headerIcon: {
     padding: 4,
   },
 
-  // ── Пост — загальний контейнер ────────────────────────────────────
+  // ── Legacy post styles (kept for backward compat) ──
   postContainer: {
     backgroundColor: COLORS.background,
-    marginBottom: 1,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.surfaceLight,
   },
-
-  // ── Шапка посту ───────────────────────────────────────────────────
   postHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   postHeaderLeft: {
@@ -52,30 +47,25 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   authorAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceLight,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.surface,
   },
   authorName: {
     color: COLORS.white,
-    fontWeight: "600",
-    fontSize: 14,
+    fontWeight: "700",
+    fontSize: 15,
   },
-
-  // ── Зображення посту ──────────────────────────────────────────────
   postImage: {
-    width: width,
-    height: width,
+    width: "100%",
+    aspectRatio: 16 / 9,
     backgroundColor: COLORS.surface,
   },
-
-  // ── Блок з інформацією під фото ───────────────────────────────────
   postInfo: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   postActions: {
     flexDirection: "row",
@@ -83,19 +73,14 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   actionButton: {
-    padding: 4,
-    marginRight: 8,
+    padding: 6,
   },
-
-  // ── Текст лайків ──────────────────────────────────────────────────
   likesText: {
     color: COLORS.white,
     fontWeight: "600",
     fontSize: 14,
     marginBottom: 4,
   },
-
-  // ── Caption ───────────────────────────────────────────────────────
   captionContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -111,8 +96,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     flexShrink: 1,
   },
-
-  // ── Коментарі / час ───────────────────────────────────────────────
   commentsText: {
     color: COLORS.grey,
     fontSize: 13,
@@ -120,7 +103,7 @@ export const styles = StyleSheet.create({
   },
   timeText: {
     color: COLORS.grey,
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
 });
