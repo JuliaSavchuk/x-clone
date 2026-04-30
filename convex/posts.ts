@@ -87,30 +87,79 @@ export const getMyPosts = query({
       .order("desc")
       .collect();
 
-    return posts.map((post) => ({
-      _id: post._id,
-      imageUrl: post.imageUrl,
-      likes: post.likes,
-      comments: post.comments,
-    }));
+    if (posts.length === 0) return [];
+
+    return await Promise.all(
+      posts.map(async (post) => {
+        const postAuthor = (await ctx.db.get(post.userId))!;
+        const like = await ctx.db
+          .query("likes")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post._id)
+          )
+          .first();
+        const bookmark = await ctx.db
+          .query("bookmarks")
+          .withIndex("by_both", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post._id)
+          )
+          .first();
+
+        return {
+          ...post,
+          author: {
+            _id: postAuthor._id,
+            username: postAuthor.username,
+            image: postAuthor.image,
+          },
+          isLiked: !!like,
+          isBookmarked: !!bookmark,
+        };
+      })
+    );
   },
 });
 
 export const getPostsByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
     const posts = await ctx.db
       .query("posts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .collect();
 
-    return posts.map((post) => ({
-      _id: post._id,
-      imageUrl: post.imageUrl,
-      likes: post.likes,
-      comments: post.comments,
-    }));
+    if (posts.length === 0) return [];
+
+    return await Promise.all(
+      posts.map(async (post) => {
+        const postAuthor = (await ctx.db.get(post.userId))!;
+        const like = await ctx.db
+          .query("likes")
+          .withIndex("by_user_and_post", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post._id)
+          )
+          .first();
+        const bookmark = await ctx.db
+          .query("bookmarks")
+          .withIndex("by_both", (q) =>
+            q.eq("userId", currentUser._id).eq("postId", post._id)
+          )
+          .first();
+
+        return {
+          ...post,
+          author: {
+            _id: postAuthor._id,
+            username: postAuthor.username,
+            image: postAuthor.image,
+          },
+          isLiked: !!like,
+          isBookmarked: !!bookmark,
+        };
+      })
+    );
   },
 });
 
@@ -132,8 +181,12 @@ export const toggleLike = mutation({
       await ctx.db.patch(args.postId, { likes: post.likes - 1 });
       return false;
     } else {
-      await ctx.db.insert("likes", { userId: currentUser._id, postId: args.postId });
+      await ctx.db.insert("likes", {
+        userId: currentUser._id,
+        postId: args.postId,
+      });
       await ctx.db.patch(args.postId, { likes: post.likes + 1 });
+
       if (post.userId !== currentUser._id) {
         await ctx.db.insert("notifications", {
           receiverId: post.userId,
@@ -173,12 +226,20 @@ export const deletePost = mutation({
       .collect();
     for (const bookmark of bookmarks) await ctx.db.delete(bookmark._id);
 
-    // Деструктуруємо в окрему змінну — TypeScript звужує тип до Id<"_storage">
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_receiver", (q) => q.eq("receiverId", currentUser._id))
+      .collect();
+    for (const notif of notifications) {
+      if (notif.postId === args.postId) {
+        await ctx.db.delete(notif._id);
+      }
+    }
+
     const storageId = post.storageId;
     if (storageId !== undefined) {
       await ctx.storage.delete(storageId);
     }
-
     await ctx.db.delete(args.postId);
     await ctx.db.patch(currentUser._id, {
       posts: Math.max(0, currentUser.posts - 1),

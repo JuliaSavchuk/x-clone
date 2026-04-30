@@ -45,7 +45,6 @@ export default function Post({ post }: PostProps) {
   const [showComments, setShowComments] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
 
-  // ── Animated refs ─────────────────────────────────────────────────
   const likeScale = useRef(new Animated.Value(1)).current;
   const likeOpacity = useRef(new Animated.Value(1)).current;
   const bookmarkScale = useRef(new Animated.Value(1)).current;
@@ -57,7 +56,6 @@ export default function Post({ post }: PostProps) {
   const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
   const deletePost = useMutation(api.posts.deletePost);
 
-  // ── Animation helpers ─────────────────────────────────────────────
   const springPop = (anim: Animated.Value, toValue = 1.4) =>
     Animated.sequence([
       Animated.spring(anim, {
@@ -89,7 +87,6 @@ export default function Post({ post }: PostProps) {
       }),
     ]);
 
-  // ── Handlers ──────────────────────────────────────────────────────
   const handleLike = async () => {
     springPop(likeScale).start();
     try {
@@ -143,7 +140,6 @@ export default function Post({ post }: PostProps) {
 
   return (
     <View style={s.wrapper}>
-      {/* ── Left column: avatar ───────────────────────────────────── */}
       <Link href="/(tabs)/notifications" asChild>
         <TouchableOpacity activeOpacity={0.8}>
           <Image
@@ -156,9 +152,7 @@ export default function Post({ post }: PostProps) {
         </TouchableOpacity>
       </Link>
 
-      {/* ── Right column ─────────────────────────────────────────── */}
       <View style={s.rightCol}>
-        {/* Header */}
         <View style={s.headerRow}>
           <View style={s.headerLeft}>
             <Text style={s.displayName} numberOfLines={1}>
@@ -182,10 +176,8 @@ export default function Post({ post }: PostProps) {
           )}
         </View>
 
-        {/* Caption */}
         {post.caption ? <Text style={s.caption}>{post.caption}</Text> : null}
 
-        {/* Image — contained, never cropped */}
         {post.imageUrl && (
           <View style={s.imageContainer}>
             <Image
@@ -198,9 +190,7 @@ export default function Post({ post }: PostProps) {
           </View>
         )}
 
-        {/* ── Action row ───────────────────────────────────────────── */}
         <View style={s.actions}>
-          {/* Reply */}
           <TouchableOpacity
             style={s.actionItem}
             onPress={handleCommentPress}
@@ -214,7 +204,6 @@ export default function Post({ post }: PostProps) {
             )}
           </TouchableOpacity>
 
-          {/* Retweet */}
           <TouchableOpacity
             style={s.actionItem}
             onPress={handleRetweetPress}
@@ -225,7 +214,6 @@ export default function Post({ post }: PostProps) {
             </Animated.View>
           </TouchableOpacity>
 
-          {/* Like — spring pop + color change */}
           <TouchableOpacity
             style={s.actionItem}
             onPress={handleLike}
@@ -251,7 +239,6 @@ export default function Post({ post }: PostProps) {
             )}
           </TouchableOpacity>
 
-          {/* Bookmark — spring pop */}
           <TouchableOpacity
             style={s.actionItem}
             onPress={handleBookmark}
@@ -266,10 +253,6 @@ export default function Post({ post }: PostProps) {
             </Animated.View>
           </TouchableOpacity>
 
-          {/* Share */}
-          <TouchableOpacity style={s.actionItem} activeOpacity={0.7}>
-            <Ionicons name="arrow-redo-outline" size={18} color={COLORS.grey} />
-          </TouchableOpacity>
         </View>
       </View>
 

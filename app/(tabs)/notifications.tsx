@@ -7,9 +7,10 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { api } from "@/convex/_generated/api";
@@ -51,10 +52,12 @@ export default function NotificationsScreen() {
   );
   const router = useRouter();
 
+  const deleteNotification = useMutation(api.notifications.deleteNotification);
+  const deleteAllNotifications = useMutation(api.notifications.deleteAllNotifications);
+
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const tabAnim = useRef(new Animated.Value(0)).current;
 
-  // Animate row entrance
   const rowAnims = useRef<{ [key: string]: Animated.Value }>({});
 
   const switchTab = (tab: Tab) => {
@@ -81,6 +84,45 @@ export default function NotificationsScreen() {
     return rowAnims.current[id];
   };
 
+  const handleDeleteOne = (notificationId: Id<"notifications">) => {
+    Alert.alert("Delete notification", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteNotification({ notificationId });
+          } catch (e) {
+            console.error("Error deleting notification:", e);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleClearAll = () => {
+    if (!notifications || notifications.length === 0) return;
+    Alert.alert(
+      "Clear all notifications",
+      "This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear All",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteAllNotifications();
+            } catch (e) {
+              console.error("Error clearing notifications:", e);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (notifications === undefined) return <Loader />;
 
   const tabIndicatorX = tabAnim.interpolate({
@@ -95,15 +137,21 @@ export default function NotificationsScreen() {
       router.push(`/user/${senderId}`);
     }
   };
+  const filteredNotifications = activeTab === "All"
+    ? notifications
+    : notifications.filter((n) => n.type === "comment");
 
   return (
     <View style={s.container}>
-      {/* ── Header ───────────────────────────────────────────────── */}
       <View style={s.header}>
         <Text style={s.headerTitle}>Notifications</Text>
+        {notifications.length > 0 && (
+          <TouchableOpacity onPress={handleClearAll} hitSlop={10}>
+            <Text style={s.clearAllText}>Clear All</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* ── Tabs ─────────────────────────────────────────────────── */}
       <View style={s.tabsContainer}>
         {TABS.map((tab) => (
           <TouchableOpacity
@@ -112,9 +160,7 @@ export default function NotificationsScreen() {
             onPress={() => switchTab(tab)}
             activeOpacity={0.8}
           >
-            <Text
-              style={[s.tabLabel, activeTab === tab && s.tabLabelActive]}
-            >
+            <Text style={[s.tabLabel, activeTab === tab && s.tabLabelActive]}>
               {tab}
             </Text>
           </TouchableOpacity>
@@ -127,16 +173,14 @@ export default function NotificationsScreen() {
         />
       </View>
 
-      {/* ── List ─────────────────────────────────────────────────── */}
       <FlatList
-        data={notifications}
+        data={filteredNotifications}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80, flexGrow: 1 }}
         renderItem={({ item }) => {
           const cfg = NOTIF_CONFIG[item.type];
           const anim = getOrCreateAnim(item._id);
-
           return (
             <Animated.View
               style={[
@@ -147,58 +191,59 @@ export default function NotificationsScreen() {
                     {
                       translateY: anim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [12, 0],
+                        outputRange: [20, 0],
                       }),
                     },
                   ],
                 },
               ]}
             >
-              {/* Type icon stripe */}
               <View style={[s.iconStripe, { backgroundColor: cfg.color }]} />
 
-              {/* Type icon */}
-              <View style={[s.iconBubble, { backgroundColor: cfg.color + "22" }]}>
+              <View style={[s.iconBubble, { backgroundColor: cfg.color + "18" }]}>
                 <Ionicons name={cfg.icon} size={18} color={cfg.color} />
               </View>
 
-              {/* Content */}
               <View style={s.contentBlock}>
                 <TouchableOpacity
                   onPress={() => handleSenderPress(item.sender._id)}
                   activeOpacity={0.85}
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}
                 >
                   <Image
-                    source={item.sender.image}
+                    source={{ uri: item.sender.image }}
                     style={s.senderAvatar}
                     contentFit="cover"
-                    transition={150}
-                    cachePolicy="memory-disk"
                   />
+                  <View style={s.textBlock}>
+                    <Text style={s.notifText} numberOfLines={2}>
+                      <Text style={s.senderName}>{item.sender.username}</Text>{" "}
+                      <Text style={s.notifLabel}>{cfg.label}</Text>
+                    </Text>
+                    <Text style={s.timeText}>
+                      {formatDistanceToNow(new Date(item._creationTime), {
+                        addSuffix: true,
+                      })}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
-
-                <View style={s.textBlock}>
-                  <Text style={s.notifText} numberOfLines={2}>
-                    <Text style={s.senderName}>{item.sender.username}</Text>
-                    {"  "}
-                    <Text style={s.notifLabel}>{cfg.label}</Text>
-                  </Text>
-                  <Text style={s.timeText}>
-                    {formatDistanceToNow(new Date(item._creationTime), {
-                      addSuffix: true,
-                    })}
-                  </Text>
-                </View>
 
                 {item.postImageUrl && (
                   <Image
-                    source={item.postImageUrl}
+                    source={{ uri: item.postImageUrl }}
                     style={s.postThumb}
                     contentFit="cover"
-                    transition={150}
                   />
                 )}
               </View>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteOne(item._id)}
+                hitSlop={10}
+                style={s.deleteBtn}
+              >
+                <Ionicons name="close-outline" size={18} color={COLORS.grey} />
+              </TouchableOpacity>
             </Animated.View>
           );
         }}
@@ -206,7 +251,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <View style={s.empty}>
             <View style={s.emptyIconWrapper}>
-              <Ionicons name="notifications-outline" size={36} color={COLORS.primary} />
+              <Ionicons name="notifications-outline" size={32} color={COLORS.primary} />
             </View>
             <Text style={s.emptyTitle}>Nothing to see here yet</Text>
             <Text style={s.emptySubtitle}>
@@ -220,10 +265,15 @@ export default function NotificationsScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   // Header
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 13,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -235,7 +285,12 @@ const s = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.4,
   },
-
+  // Clear All
+  clearAllText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
   // Tabs
   tabsContainer: {
     flexDirection: "row",
@@ -243,9 +298,19 @@ const s = StyleSheet.create({
     borderBottomColor: COLORS.surfaceLight,
     position: "relative",
   },
-  tab: { flex: 1, alignItems: "center", paddingVertical: 14 },
-  tabLabel: { color: COLORS.grey, fontSize: 15, fontWeight: "600" },
-  tabLabelActive: { color: COLORS.white },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  tabLabel: {
+    color: COLORS.grey,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  tabLabelActive: {
+    color: COLORS.white,
+  },
   tabIndicator: {
     position: "absolute",
     bottom: 0,
@@ -255,7 +320,6 @@ const s = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: COLORS.primary,
   },
-
   // Row
   row: {
     flexDirection: "row",
@@ -295,11 +359,25 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.surface,
     flexShrink: 0,
   },
-  textBlock: { flex: 1, gap: 3 },
-  notifText: { color: COLORS.white, fontSize: 14, lineHeight: 19 },
-  senderName: { fontWeight: "700" },
-  notifLabel: { color: COLORS.grey },
-  timeText: { color: COLORS.greyLight, fontSize: 12 },
+  textBlock: {
+    flex: 1,
+    gap: 3,
+  },
+  notifText: {
+    color: COLORS.white,
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  senderName: {
+    fontWeight: "700",
+  },
+  notifLabel: {
+    color: COLORS.grey,
+  },
+  timeText: {
+    color: COLORS.greyLight,
+    fontSize: 12,
+  },
   postThumb: {
     width: 46,
     height: 46,
@@ -309,13 +387,16 @@ const s = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.surfaceLight,
   },
-
+  //Кнопка видалення
+  deleteBtn: {
+    padding: 6,
+    flexShrink: 0,
+  },
   separator: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: COLORS.surfaceLight,
-    marginLeft: 16 + 3 + 12 + 38 + 12, // aligned after content
+    marginLeft: 16 + 3 + 12 + 38 + 12,
   },
-
   // Empty
   empty: {
     flex: 1,

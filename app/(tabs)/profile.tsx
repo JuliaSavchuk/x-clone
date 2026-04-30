@@ -15,14 +15,13 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
 import Loader from "@/components/Loader";
+import Post from "@/components/Post";
 import { COLORS } from "@/constants/theme";
+import { Id } from "@/convex/_generated/dataModel";
 
 const { width } = Dimensions.get("window");
 const BANNER_H = 110;
 const AVATAR_SIZE = 80;
-const GRID_GAP = 2;
-const GRID_COL = 3;
-const GRID_ITEM = (width - GRID_GAP * (GRID_COL - 1)) / GRID_COL;
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
@@ -53,7 +52,11 @@ export default function ProfileScreen() {
 
   if (!currentUser) return <Loader />;
 
-  const displayedPosts = activeTab === "posts" ? myPosts : bookmarkedPosts;
+  const rawPosts = activeTab === "posts" ? myPosts : bookmarkedPosts;
+  const displayedPosts = rawPosts
+    ? rawPosts.filter((p): p is NonNullable<typeof p> => p != null)
+    : undefined;
+
   const tabIndicatorX = tabAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, width / 2],
@@ -61,7 +64,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={s.container}>
-      {/* ── Fixed top header ─────────────────────────────────────── */}
       <View style={s.topHeader}>
         <View style={s.topHeaderLeft}>
           <Text style={s.topUsername}>{currentUser.username}</Text>
@@ -75,35 +77,29 @@ export default function ProfileScreen() {
       </View>
 
       <FlatList
-        data={displayedPosts ?? []}
+        data={displayedPosts}
         keyExtractor={(item) => item._id}
-        numColumns={GRID_COL}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
-        columnWrapperStyle={s.columnWrapper}
         ListHeaderComponent={
-          <View>
-            {/* ── Banner ─────────────────────────────────────────── */}
+          <>
             <View style={s.banner}>
               <View style={s.bannerGradient} />
             </View>
 
-            {/* ── Avatar row ────────────────────────────────────── */}
             <View style={s.avatarRow}>
               <View style={s.avatarWrapper}>
                 <Image
-                  source={currentUser.image}
+                  source={{ uri: currentUser.image }}
                   style={s.avatar}
                   contentFit="cover"
-                  transition={200}
                 />
               </View>
-              <TouchableOpacity style={s.editBtn}>
+              <TouchableOpacity style={s.editBtn} activeOpacity={0.8}>
                 <Text style={s.editBtnText}>Edit profile</Text>
               </TouchableOpacity>
             </View>
 
-            {/* ── Name + handle ─────────────────────────────────── */}
             <View style={s.nameSection}>
               <Text style={s.fullname}>{currentUser.fullname}</Text>
               <Text style={s.handle}>
@@ -113,38 +109,30 @@ export default function ProfileScreen() {
                 <Text style={s.bio}>{currentUser.bio}</Text>
               ) : null}
 
-              {/* Joined date placeholder */}
               <View style={s.metaRow}>
                 <Ionicons name="calendar-outline" size={14} color={COLORS.grey} />
                 <Text style={s.metaText}>Joined recently</Text>
               </View>
 
-              {/* Following / Followers */}
               <View style={s.followRow}>
-                <TouchableOpacity style={s.followStat}>
+                <View style={s.followStat}>
                   <Text style={s.followCount}>{currentUser.following}</Text>
                   <Text style={s.followLabel}> Following</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.followStat}>
+                </View>
+                <View style={s.followStat}>
                   <Text style={s.followCount}>{currentUser.followers}</Text>
                   <Text style={s.followLabel}> Followers</Text>
-                </TouchableOpacity>
+                </View>
               </View>
             </View>
 
-            {/* ── Tabs: Posts / Bookmarks ────────────────────────── */}
             <View style={s.tabsContainer}>
               <TouchableOpacity
                 style={s.tab}
                 onPress={() => switchTab("posts")}
                 activeOpacity={0.8}
               >
-                <Text
-                  style={[
-                    s.tabLabel,
-                    activeTab === "posts" && s.tabLabelActive,
-                  ]}
-                >
+                <Text style={[s.tabLabel, activeTab === "posts" && s.tabLabelActive]}>
                   Posts
                 </Text>
               </TouchableOpacity>
@@ -154,16 +142,11 @@ export default function ProfileScreen() {
                 activeOpacity={0.8}
               >
                 <Text
-                  style={[
-                    s.tabLabel,
-                    activeTab === "bookmarks" && s.tabLabelActive,
-                  ]}
+                  style={[s.tabLabel, activeTab === "bookmarks" && s.tabLabelActive]}
                 >
                   Bookmarks
                 </Text>
               </TouchableOpacity>
-
-              {/* Animated underline */}
               <Animated.View
                 style={[
                   s.tabIndicator,
@@ -171,33 +154,15 @@ export default function ProfileScreen() {
                 ]}
               />
             </View>
-          </View>
+          </>
         }
-        renderItem={({ item }) => (
-          <View style={s.gridItem}>
-            {item.imageUrl ? (
-              <Image
-                source={item.imageUrl}
-                style={s.gridImage}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={150}
-              />
-            ) : (
-              <View style={s.textGridItem}>
-                <Text style={s.textGridContent} numberOfLines={4}>
-                  {item.caption}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+        renderItem={({ item }) => <Post post={item} />}
         ListEmptyComponent={
           <View style={s.empty}>
             <Ionicons
-              name={activeTab === "posts" ? "newspaper-outline" : "bookmark-outline"}
+              name={activeTab === "posts" ? "camera-outline" : "bookmark-outline"}
               size={48}
-              color={COLORS.surfaceLight}
+              color={COLORS.grey}
             />
             <Text style={s.emptyTitle}>
               {activeTab === "posts" ? "No posts yet" : "No saved posts"}
@@ -215,9 +180,10 @@ export default function ProfileScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-
-  // Top header (fixed)
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   topHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -228,16 +194,22 @@ const s = StyleSheet.create({
     borderBottomColor: COLORS.surfaceLight,
     backgroundColor: COLORS.background,
   },
-  topHeaderLeft: { gap: 1 },
+  topHeaderLeft: {
+    gap: 1,
+  },
   topUsername: {
     color: COLORS.white,
     fontSize: 17,
     fontWeight: "800",
     letterSpacing: -0.3,
   },
-  topPostCount: { color: COLORS.grey, fontSize: 12 },
-  signOutBtn: { padding: 4 },
-
+  topPostCount: {
+    color: COLORS.grey,
+    fontSize: 12,
+  },
+  signOutBtn: {
+    padding: 4,
+  },
   // Banner
   banner: {
     height: BANNER_H,
@@ -246,10 +218,9 @@ const s = StyleSheet.create({
   },
   bannerGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.surfaceLight,
-    opacity: 0.6,
+    backgroundColor: COLORS.primary,
+    opacity: 0.8,
   },
-
   // Avatar
   avatarRow: {
     flexDirection: "row",
@@ -279,8 +250,11 @@ const s = StyleSheet.create({
     paddingVertical: 7,
     marginBottom: 6,
   },
-  editBtnText: { color: COLORS.white, fontSize: 14, fontWeight: "700" },
-
+  editBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   // Name section
   nameSection: {
     paddingHorizontal: 16,
@@ -293,15 +267,43 @@ const s = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.3,
   },
-  handle: { color: COLORS.grey, fontSize: 15 },
-  bio: { color: COLORS.white, fontSize: 15, lineHeight: 21, marginTop: 6 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
-  metaText: { color: COLORS.grey, fontSize: 14 },
-  followRow: { flexDirection: "row", gap: 20, marginTop: 8 },
-  followStat: { flexDirection: "row" },
-  followCount: { color: COLORS.white, fontSize: 14, fontWeight: "700" },
-  followLabel: { color: COLORS.grey, fontSize: 14 },
-
+  handle: {
+    color: COLORS.grey,
+    fontSize: 15,
+  },
+  bio: {
+    color: COLORS.white,
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: 6,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 6,
+  },
+  metaText: {
+    color: COLORS.grey,
+    fontSize: 14,
+  },
+  followRow: {
+    flexDirection: "row",
+    gap: 20,
+    marginTop: 8,
+  },
+  followStat: {
+    flexDirection: "row",
+  },
+  followCount: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  followLabel: {
+    color: COLORS.grey,
+    fontSize: 14,
+  },
   // Tabs
   tabsContainer: {
     flexDirection: "row",
@@ -319,7 +321,9 @@ const s = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
-  tabLabelActive: { color: COLORS.white },
+  tabLabelActive: {
+    color: COLORS.white,
+  },
   tabIndicator: {
     position: "absolute",
     bottom: 0,
@@ -329,37 +333,17 @@ const s = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: COLORS.primary,
   },
-
-  // Grid
-  columnWrapper: { gap: GRID_GAP },
-  gridItem: {
-    width: GRID_ITEM,
-    height: GRID_ITEM,
-    marginBottom: GRID_GAP,
-    backgroundColor: COLORS.surface,
-  },
-  gridImage: { width: "100%", height: "100%" },
-  textGridItem: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.surface,
-    justifyContent: "center",
-    padding: 8,
-  },
-  textGridContent: {
-    color: COLORS.white,
-    fontSize: 11,
-    lineHeight: 15,
-  },
-
-  // Empty
   empty: {
     alignItems: "center",
     paddingTop: 60,
     paddingHorizontal: 40,
     gap: 10,
   },
-  emptyTitle: { color: COLORS.white, fontSize: 20, fontWeight: "800" },
+  emptyTitle: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: "800",
+  },
   emptySubtitle: {
     color: COLORS.grey,
     fontSize: 14,
